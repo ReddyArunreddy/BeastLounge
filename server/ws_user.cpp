@@ -115,13 +115,16 @@ public:
 
                 // Parse the buffer into JSON
                 json::parser pr;
-                pr.write(msg_.data(), ec);
+                auto const cb = msg_.data();
+                json::value jv = json::parse(
+                    { static_cast<char const*>(
+                        cb.data()), cb.size() }, ec);
                 if(ec)
                     return fail(ec, "parse-json");
 
                 // Validate and extract the JSON-RPC request
                 rpc_call rpc(*this);
-                rpc.extract(pr.release(), ec);
+                rpc.extract(std::move(jv), ec);
                 try
                 {
                     if(ec)

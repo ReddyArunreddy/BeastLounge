@@ -253,36 +253,36 @@ struct seat
     void
     to_json(json::value& jv) const
     {
-        jv = json::object{};
-        jv.emplace("hands", hands);
+        auto& obj = jv.emplace_object();
+        obj.emplace("hands", json::to_value(hands));
         switch(state)
         {
         case dealer:
-            jv.emplace("state", "dealer");
+            obj.emplace("state", "dealer");
             break;
 
         case waiting:
-            jv.emplace("state", "waiting");
-            jv.emplace("user", u->name);
-            jv.emplace("chips", chips);
+            obj.emplace("state", "waiting");
+            obj.emplace("user", u->name);
+            obj.emplace("chips", chips);
             break;
 
         case playing:
-            jv.emplace("state", "playing");
-            jv.emplace("user", u->name);
-            jv.emplace("chips", chips);
-            jv.emplace("wager", wager);
+            obj.emplace("state", "playing");
+            obj.emplace("user", u->name);
+            obj.emplace("chips", chips);
+            obj.emplace("wager", wager);
             break;
 
         case leaving:
-            jv.emplace("state", "leaving");
-            jv.emplace("user", u->name);
-            jv.emplace("chips", chips);
-            jv.emplace("wager", wager);
+            obj.emplace("state", "leaving");
+            obj.emplace("user", u->name);
+            obj.emplace("chips", chips);
+            obj.emplace("wager", wager);
             break;
 
         case open:
-            jv.emplace("state", "open");
+            obj.emplace("state", "open");
             break;
         }
     }
@@ -440,23 +440,28 @@ public:
     void
     to_json(json::value& jv) const
     {
-        auto& obj = jv.emplace_object();
         switch(s_)
         {
         case state::wait:
-            obj["message"] = "Waiting for players";
+            jv = {
+                { "message", "Waiting for players" }
+            };
             break;
 
         case state::play:
-            obj["message"] = "Playing";
+            jv = {
+                { "message", "Playing" }
+            };
             break;
         }
+        auto& obj = jv.as_object();
         {
             auto& arr = obj.emplace(
-                "seats", json::array{}).first->second;
+                "seats", json::array{})
+                    .first->value().emplace_array();
             for(std::size_t i = 0;
                 i < seat_.size(); ++i)
-                arr.emplace_back(seat_[i]);
+                arr.emplace_back(json::to_value(seat_[i]));
         }
     }
 
@@ -606,11 +611,12 @@ private:
     void
     update(beast::string_view action)
     {
-        json::value jv;
-        jv["cid"] = cid();
-        jv["verb"] = "update";
-        jv["action"] = action;
-        jv["game"] = g_;
+        json::value jv(json::object_kind);
+        auto& obj = jv.get_object();
+        obj["cid"] = cid();
+        obj["verb"] = "update";
+        obj["action"] = action;
+        obj["game"] = json::to_value(g_);
         send(jv);
     }
 
@@ -644,11 +650,12 @@ private:
     void
     do_insert(boost::shared_ptr<user> sp)
     {
-        json::value jv;
-        jv["cid"] = cid();
-        jv["verb"] = "update";
-        jv["action"] = "init";
-        jv["game"] = g_;
+        json::value jv(json::object_kind);
+        auto& obj = jv.get_object();
+        obj["cid"] = cid();
+        obj["verb"] = "update";
+        obj["action"] = "init";
+        obj["game"] = json::to_value(g_);
         sp->send(jv);
     }
 

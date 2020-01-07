@@ -13,13 +13,19 @@
 #include "config.hpp"
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/string.hpp>
+#include <boost/json.hpp>
 #include <memory>
 #include <ostream>
 #include <sstream>
 
 struct logger_config
 {
-    std::string path;
+    logger_config() = default;
+
+    explicit
+    logger_config(json::value&& jv);
+
+    json::string path;
 };
 
 //------------------------------------------------------------------------------
